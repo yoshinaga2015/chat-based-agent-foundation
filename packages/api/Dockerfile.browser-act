@@ -1,0 +1,12 @@
+# Steel CDP 用（Chromium バイナリは入れない）。context = packages/api
+FROM node:22-bookworm-slim
+WORKDIR /app
+RUN npm init -y \
+  && npm install --omit=dev playwright@1.64.1 \
+  && npm cache clean --force
+COPY browser-act/server.mjs ./server.mjs
+ENV FUDO_BROWSER_BACKEND=steel
+ENV FUDO_BROWSER_ACT_HOST=0.0.0.0
+ENV FUDO_BROWSER_ACT_PORT=4176
+EXPOSE 4176
+CMD ["node", "server.mjs"]

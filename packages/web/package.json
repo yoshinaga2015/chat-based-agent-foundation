@@ -1,0 +1,41 @@
+{
+  "name": "web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsx local/dev.ts",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@cloudflare/kumo": "2.15.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "agent": "workspace:*",
+    "echarts": "^6.1.0",
+    "leaflet": "^1.9.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-cjk-friendly": "^2.3.3",
+    "remark-cjk-friendly-gfm-strikethrough": "^2.3.2",
+    "remark-gfm": "^4.0.1",
+    "session": "workspace:*",
+    "simple-icons": "^16.36.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "catalog:",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "tsconfig": "workspace:*",
+    "tsx": "^4.20.0",
+    "typescript": "catalog:",
+    "vite": "^8.3.4",
+    "vitest": "catalog:"
+  }
+}

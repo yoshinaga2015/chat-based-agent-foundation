@@ -1,0 +1,26 @@
+{
+  "name": "api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cf dev --persist-to ./.fudo/cf-state",
+    "build": "export FUDO_BUILD_ID=\"${FUDO_BUILD_ID:-$(git rev-parse --short HEAD 2>/dev/null || printf 0000000)-$(date +%s)}\" && pnpm --filter web build && cf build",
+    "deploy": "export FUDO_BUILD_ID=\"${FUDO_BUILD_ID:-$(git rev-parse --short HEAD 2>/dev/null || printf 0000000)-$(date +%s)}\" && pnpm --filter web build && cf deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.4.0",
+    "agent": "workspace:*",
+    "session": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.3",
+    "cf": "^0.15.0",
+    "tsconfig": "workspace:*",
+    "typescript": "catalog:",
+    "vite": "^8.3.4",
+    "vitest": "catalog:",
+    "wrangler": "^4.40.0"
+  }
+}

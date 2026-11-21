@@ -1,0 +1,21 @@
+{
+  "name": "session",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "eval:models": "tsx eval/model-eval.ts"
+  },
+  "dependencies": {
+    "agent": "workspace:*"
+  },
+  "devDependencies": {
+    "tsconfig": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

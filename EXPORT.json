@@ -1,0 +1,10 @@
+{
+  "source": "8f598e113f827d692cc2bd693b95e1adbbe43f1e",
+  "packages": [
+    "agent",
+    "session",
+    "api",
+    "web",
+    "tsconfig"
+  ]
+}
