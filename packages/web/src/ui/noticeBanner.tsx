@@ -6,6 +6,7 @@ import { noticeBannerVariant, type NoticeBannerVariant } from "../noticeBanner";
 /** 閉じられる一過性 notice。HITL（承認待ち）には使わない。 */
 export function DismissibleNoticeBanner(props: {
   title: string;
+  description?: string;
   variant?: NoticeBannerVariant;
   onDismiss: () => void;
 }): ReactNode {
@@ -14,6 +15,7 @@ export function DismissibleNoticeBanner(props: {
     <Banner
       variant={variant}
       title={props.title}
+      description={props.description}
       action={
         <Banner.Action
           variant="ghost"

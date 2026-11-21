@@ -170,10 +170,10 @@ export function formatBytes(bytes: number): string {
 function handoffTaskLabel(handoff: NonNullable<ProductView["pendingBrowserHandoff"]>): string {
   const task = handoff.task?.trim();
   if (task) return task;
-  if (handoff.reason === "login") return "ログインを済ませ、目的の画面が見えたら完了かやめるを押す。";
-  if (handoff.reason === "captcha") return "認証や画像確認を済ませたら完了かやめるを押す。";
-  if (handoff.reason === "blocked") return "アクセス確認を通したら完了かやめるを押す。";
-  return "画面で必要な操作を済ませたら完了かやめるを押す。";
+  if (handoff.reason === "login") return "ログインを済ませ、目的の画面が見えたら「完了」または「やめる」を押してください。";
+  if (handoff.reason === "captcha") return "認証や画像確認を済ませたら「完了」または「やめる」を押してください。";
+  if (handoff.reason === "blocked") return "アクセス確認を通過したら「完了」または「やめる」を押してください。";
+  return "画面で必要な操作を済ませたら「完了」または「やめる」を押してください。";
 }
 
 /** Banner が task を出すので、同じ文の吹き出しは出さない。 */
@@ -248,11 +248,11 @@ export function BrowserHandoffBar(props: {
       const reason = error instanceof Error ? error.message : "";
       setTypeError(
         reason === "no_handoff"
-          ? "引き継ぎが切れています"
+          ? "操作の引き継ぎが終了しています"
           : reason === "expired"
-            ? "引き継ぎの期限が切れました"
+            ? "操作の有効期限が切れました"
             : reason === "stale"
-              ? "画面セッションが切れました。もう一度渡してもらってください"
+              ? "ブラウザセッションが切れました。再度操作を引き継いでください。"
               : "入力に失敗しました"
       );
     } finally {
@@ -270,7 +270,7 @@ export function BrowserHandoffBar(props: {
       >
         <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <p className="min-w-0 font-medium">
-            {expired ? "操作の引き継ぎが期限切れ" : "あなたが操作中"}
+            {expired ? "操作の有効期限が切れました" : "あなたが操作中"}
           </p>
           <p className="shrink-0 text-xs opacity-80">
             {expired ? "期限切れ" : handoffRemainingLabel(remainingMs)}

@@ -224,15 +224,15 @@ export async function resolvePendingAgentWrite(
   decision: "approve" | "reject",
   host: AgentHost | undefined
 ): Promise<{ ok: true; notice: string } | { ok: false; notice: string }> {
-  if (!host) return { ok: false, notice: "外部エージェントの実行先がこの配備に無い" };
+  if (!host) return { ok: false, notice: "この環境では外部エージェントが設定されていません" };
   if (decision === "reject") {
     await host.discard(pending.runId);
-    return { ok: true, notice: "変更を捨てた。書類・リポジトリは元のまま。" };
+    return { ok: true, notice: "変更を破棄しました。書類やリポジトリは変更されていません。" };
   }
   const written = await host.writeBack(pending);
   if (!written.ok) {
     const why = written.detail?.constraint ?? written.reason;
-    return { ok: false, notice: `書き戻しに失敗した（${why}）` };
+    return { ok: false, notice: `変更の反映に失敗しました（${why}）` };
   }
   return { ok: true, notice: written.url ? `${written.summary} ${written.url}` : written.summary };
 }

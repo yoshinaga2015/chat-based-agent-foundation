@@ -376,7 +376,7 @@ export async function resolvePlan(
     now,
     async (mounted) => {
       const desk = await deskResolvePlan(mounted.desk, decision, now, opts);
-      const notice = desk.notice ?? (decision === "approve" ? "実行計画を承認した。" : "実行計画を却下した。");
+      const notice = desk.notice ?? (decision === "approve" ? "実行計画を承認しました" : "実行計画を却下しました");
       return appendAssistant({ ...mounted, desk: withoutNotice(desk) }, notice, now);
     }
   );
@@ -385,7 +385,7 @@ export async function resolvePlan(
 
 export function deleteItem(session: Session, kind: string, id: string, now: number): Session {
   if (!isPendingDeleteKind(kind) || !id.trim()) {
-    return { ...session, desk: { ...session.desk, notice: "削除対象が不正" } };
+    return { ...session, desk: { ...session.desk, notice: "無効な削除対象です" } };
   }
   const pending: PendingDelete = { kind, id: id.trim() };
   return withThreadHitl(session, null, now, (mounted) => ({
@@ -405,12 +405,12 @@ export function writeNote(session: Session, input: { id: string; title: string; 
 export function undoLast(session: Session, now: number): Session {
   const tip = session.undoStack.at(-1);
   if (!tip) {
-    return { ...session, desk: { ...session.desk, notice: "取り消せる操作はない" } };
+    return { ...session, desk: { ...session.desk, notice: "取り消せる操作はありません" } };
   }
   const desk = tip.kind === "note"
     ? deskDeleteNote(session.desk, tip.id, now)
     : deskDeleteCard(session.desk, tip.id, now);
-  const notice = desk.notice ?? (tip.kind === "note" ? "ノートを取り消した。" : "カードを取り消した。");
+  const notice = desk.notice ?? (tip.kind === "note" ? "ノートを取り消しました" : "カードを取り消しました");
   return {
     ...session,
     desk: { ...desk, notice },
@@ -434,7 +434,7 @@ export function startJob(session: Session, name: string, now: number): Session {
 export function interruptTurn(session: Session, now: number): Session {
   return withThreadHitl(session, null, now, (mounted) => {
     const desk = deskInterrupt(mounted.desk, now);
-    const notice = desk.notice ?? "割り込みにより、保留中の変更を破棄した";
+    const notice = desk.notice ?? "中断されたため、保留中の変更を破棄しました";
     return appendAssistant({ ...mounted, desk: withoutNotice(desk) }, notice, now);
   });
 }
@@ -539,7 +539,7 @@ async function draftSpeakMounted(
 
   if (/^読んで[:：]/.test(utterance)) {
     const desk = deskSpeak(withFiles.desk, utterance, now);
-    const answer = desk.last?.text ?? desk.notice ?? "そのスキルは無い。";
+    const answer = desk.last?.text ?? desk.notice ?? "指定されたスキルは見つかりませんでした。";
     return finishSpeak(
       appendExchange({ ...withFiles, desk }, utterance, answer, now, lineMeta),
       utterance,
@@ -819,7 +819,7 @@ async function completeBrowserHandoffMounted(
       tokens: chunks("ブラウザ操作の引き継ぎ待ちはない。"),
       next: {
         ...session,
-        desk: { ...session.desk, notice: "ブラウザ操作の引き継ぎ待ちはない。" }
+        desk: { ...session.desk, notice: "引き継ぎ待ちのブラウザ操作はありません" }
       },
       rejected: null,
       tokensUsed: 0
@@ -957,7 +957,7 @@ export async function startMcpOAuth(
   const mcpUrl = (input.url ?? entry?.url ?? "").trim();
   if (!name || !mcpUrl) {
     return {
-      session: { ...session, desk: withAbilityNotice(session.desk, "接続先が要る") },
+      session: { ...session, desk: withAbilityNotice(session.desk, "接続先の URL を入力してください") },
       error: "missing_target"
     };
   }
@@ -984,7 +984,7 @@ export async function startMcpOAuth(
           ...session,
           desk: withAbilityNotice(
             session.desk,
-            canBearer ? null : "この接続には製品側の OAuth クライアント設定が必要"
+            canBearer ? null : "この接続には OAuth クライアントの事前設定が必要です"
           )
         },
         error: started.reason
@@ -995,7 +995,7 @@ export async function startMcpOAuth(
       return {
         session: {
           ...session,
-          desk: withAbilityNotice(session.desk, "この MCP は製品の事前登録（ベンダー承認）が必要")
+          desk: withAbilityNotice(session.desk, "この MCP サーバーは事前登録（ベンダー承認）が必要です")
         },
         error: started.reason
       };
@@ -1003,7 +1003,7 @@ export async function startMcpOAuth(
     return {
       session: {
         ...session,
-        desk: withAbilityNotice(session.desk, `接続を開始できない（${started.reason}）`)
+        desk: withAbilityNotice(session.desk, `接続を開始できませんでした（${started.reason}）`)
       },
       error: started.reason
     };
@@ -1022,7 +1022,7 @@ export async function completeMcpOAuth(
   const fallbackOrigin = "http://127.0.0.1:4174";
   if (!pending) {
     return {
-      session: { ...session, desk: deskFailMcpOAuth(session.desk, "OAuth 待ちがない") },
+      session: { ...session, desk: deskFailMcpOAuth(session.desk, "認証セッションが見つかりません。もう一度接続をお試しください。") },
       redirectOrigin: fallbackOrigin
     };
   }
@@ -1031,14 +1031,14 @@ export async function completeMcpOAuth(
     return {
       session: {
         ...session,
-        desk: deskFailMcpOAuth(session.desk, query.error_description || query.error || "認可が拒否された")
+        desk: deskFailMcpOAuth(session.desk, query.error_description || query.error || "認証が拒否されました")
       },
       redirectOrigin: origin
     };
   }
   if (!query.code || !query.state) {
     return {
-      session: { ...session, desk: deskFailMcpOAuth(session.desk, "認可コードが無い") },
+      session: { ...session, desk: deskFailMcpOAuth(session.desk, "認証コードを取得できませんでした") },
       redirectOrigin: origin
     };
   }
@@ -1049,7 +1049,7 @@ export async function completeMcpOAuth(
   });
   if (!finished.ok) {
     return {
-      session: { ...session, desk: deskFailMcpOAuth(session.desk, `接続に失敗した（${finished.reason}）`) },
+      session: { ...session, desk: deskFailMcpOAuth(session.desk, `接続に失敗しました（${finished.reason}）`) },
       redirectOrigin: origin
     };
   }
@@ -1134,7 +1134,7 @@ export async function probeMcpServer(
 ): Promise<Session> {
   const server = session.desk.mcpServers.find((item) => item.id === id);
   if (!server) {
-    return { ...session, desk: withAbilityNotice(session.desk, "MCP が見つからない") };
+    return { ...session, desk: withAbilityNotice(session.desk, "指定された MCP サーバーが見つかりません") };
   }
   const probed = await probeMcp(server, transport ?? httpMcpTransport());
   const at = Date.now();
@@ -1284,7 +1284,7 @@ function withAbilityNotice(desk: Desk, abilityNotice: string | null): Desk {
 }
 
 function isAbilityScopedNotice(text: string): boolean {
-  return /^(接続 OK|接続失敗|接続先が要る|接続を開始できない|この MCP |MCP が見つからない|この接続には)/.test(
+  return /^(接続 OK|接続失敗|接続に失敗|接続先が要る|接続先の URL|接続を開始でき|この MCP |指定された MCP |MCP が見つからない|この接続には|認証セッションが見つかりません|認証が拒否されました|認証コードを取得できませんでした)/.test(
     text.trim()
   );
 }

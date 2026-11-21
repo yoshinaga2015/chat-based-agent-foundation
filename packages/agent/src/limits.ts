@@ -18,4 +18,4 @@ export const UNDO_MS = 30 * 24 * 60 * 60 * 1000;
 export const MEMO_CHARS = 8_000;
 export const NOTE_TITLE_CHARS = 200;
 
-export const TOKEN_CAP_MESSAGE = "本日の利用上限に達しました。明日また利用できます。";
+export const TOKEN_CAP_MESSAGE = "本日の利用上限に達しました。明日以降に再度ご利用ください。";

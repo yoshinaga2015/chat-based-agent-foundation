@@ -23,7 +23,7 @@ describe("capabilityGapsFromEnv", () => {
       { id: "run_agent", label: "Claude Code", missing: ["ANTHROPIC_API_KEY", "DOCS"] },
       {
         id: "agent_repos",
-        label: "リポジトリの作業場所",
+        label: "GitHub リポジトリ連携",
         missing: ["GITHUB_APP_ID", "GITHUB_APP_PRIVATE_KEY", "GITHUB_APP_INSTALLATION_ID", "FUDO_AGENT_REPOS"]
       }
     ]);
@@ -42,7 +42,7 @@ describe("capabilityGapsFromEnv", () => {
       true
     );
     expect(gaps).toEqual([
-      { id: "agent_repos", label: "リポジトリの作業場所", missing: ["FUDO_AGENT_REPOS"] }
+      { id: "agent_repos", label: "GitHub リポジトリ連携", missing: ["FUDO_AGENT_REPOS"] }
     ]);
   });
 });

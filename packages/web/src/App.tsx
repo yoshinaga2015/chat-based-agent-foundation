@@ -85,7 +85,12 @@ import {
 } from "./api";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { abilityStatusBadge, mcpConnectionStatus, type AbilityStatus } from "./abilityStatus";
-import { noticeBannerVariant } from "./noticeBanner";
+import {
+  capabilityGapCopy,
+  capabilityGapSignature,
+  readDismissedCapabilityGaps,
+  writeDismissedCapabilityGaps
+} from "./capabilityGapNotice";
 import { BrowserHandoffBar, formatBytes, isHandoffTaskEcho, PlanHitlBanner } from "./ui/hitl";
 import { DismissibleNoticeBanner } from "./ui/noticeBanner";
 import { McpConfigureDialog } from "./ui/mcpConfigureDialog";
@@ -370,7 +375,7 @@ export function App() {
     const utterance = text.trim();
     if (!utterance && !payload) return;
     if (utterance.length > 20_000) {
-      setError("メッセージは2万字までです");
+      setError("メッセージは 20,000 文字以内で入力してください");
       return;
     }
     const prevOrigin = speakThreadIdRef.current;
@@ -412,7 +417,7 @@ export function App() {
       setView(beforeSend);
       clearSpeakThread(originThreadId);
       const body = await response.json().catch(() => ({})) as { reason?: string };
-      setError(speakError(body.reason) || "メッセージは2万字までです");
+      setError(speakError(body.reason) || "送信に失敗しました");
       return;
     }
     await attachSpeakStream(response, originThreadId, mine);
@@ -436,13 +441,13 @@ export function App() {
     } catch {
       if (mine !== speakGen.current) return;
       clearSpeakThread(originThreadId);
-      if (!abort.signal.aborted) setError("再開に失敗しました");
+      if (!abort.signal.aborted) setError("応答の再開に失敗しました");
       return;
     }
     if (mine !== speakGen.current) return;
     if (!response.ok) {
       clearSpeakThread(originThreadId);
-      setError("再開に失敗しました");
+      setError("応答の再開に失敗しました");
       return;
     }
     await attachSpeakStream(response, originThreadId, mine);
@@ -455,7 +460,7 @@ export function App() {
       return;
     }
     if (utterance.length > 20_000) {
-      setError("メッセージは2万字までです");
+      setError("メッセージは 20,000 文字以内で入力してください");
       return;
     }
     if (speaking) {
@@ -558,13 +563,17 @@ export function App() {
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-kumo-base">
         <MobileSidebarOpen />
         {buildPhase === "failed" ? (
-          <div className="flex flex-wrap items-center gap-2 border-b border-kumo-line px-5 py-3">
-            <Text size="sm" as="p">
-              この画面は古くなっています
-            </Text>
-            <Button size="sm" variant="primary" type="button" onClick={() => globalThis.location.reload()}>
-              再読み込み
-            </Button>
+          <div className="px-5 py-3">
+            <Banner
+              variant="alert"
+              title="アプリが更新されました"
+              description="再読み込みして最新バージョンを反映してください。"
+              action={
+                <Banner.Action variant="primary" type="button" onClick={() => globalThis.location.reload()}>
+                  再読み込み
+                </Banner.Action>
+              }
+            />
           </div>
         ) : null}
         {!view && !dashboardGallery && !formsGallery ? (
@@ -592,6 +601,7 @@ export function App() {
             pendingBrowserHandoff={view!.pendingBrowserHandoff}
             draft={draft}
             error={error}
+            onDismissError={() => setError("")}
             attach={attach}
             speakQueue={speakQueue}
             last={view!.last}
@@ -607,7 +617,7 @@ export function App() {
                 if (!id) return;
                 const next = await postJson("/api/thread", { id, model });
                 if (Array.isArray(next.threads)) setView(next);
-                else setError("このモデルは選べません");
+                else setError("このモデルは選択できません");
               });
             }}
             onDraft={setDraft}
@@ -654,12 +664,12 @@ export function App() {
                 return;
               }
               if (file.size > SPEAK_ATTACH_MAX_BYTES) {
-                setError(`ファイルが大きすぎます（${ATTACH_HINT}）`);
+                setError(`ファイルサイズが上限を超えています（${ATTACH_HINT}）`);
                 return;
               }
               const next = await fileToSpeakAttach(file);
               if (!next) {
-                setError(`この形式は添付できません（${ATTACH_HINT}）`);
+                setError(`対応していないファイル形式です（${ATTACH_HINT}）`);
                 return;
               }
               setError("");
@@ -700,9 +710,10 @@ function storedWidth(): number {
 }
 
 function speakError(reason: string | undefined): string {
-  if (reason === "too_many") return `添付は1件までです（${ATTACH_HINT}）`;
-  if (reason === "too_large") return `ファイルが大きすぎます（${ATTACH_HINT}）`;
-  if (reason === "bad_media" || reason === "bad_payload") return `この形式は添付できません（${ATTACH_HINT}）`;
+  if (reason === "too_long" || reason === "message_too_long") return "メッセージは 20,000 文字以内で入力してください";
+  if (reason === "too_many") return `添付できるファイルは1件までです（${ATTACH_HINT}）`;
+  if (reason === "too_large") return `ファイルサイズが上限を超えています（${ATTACH_HINT}）`;
+  if (reason === "bad_media" || reason === "bad_payload") return `対応していないファイル形式です（${ATTACH_HINT}）`;
   return "";
 }
 
@@ -760,7 +771,7 @@ function SidebarPaneButtons(props: {
         shape="square"
         variant={props.pane === "ability" ? "secondary" : "ghost"}
         type="button"
-        aria-label="能力"
+        aria-label="カスタマイズ"
         aria-pressed={props.pane === "ability"}
         onClick={() => openPane("ability")}
       >
@@ -967,6 +978,7 @@ function ChatPane(props: {
   pendingBrowserHandoff: ProductView["pendingBrowserHandoff"];
   draft: string;
   error: string;
+  onDismissError: () => void;
   attach: SpeakAttachPayload | null;
   speakQueue: QueuedSpeak | null;
   last: ProductView["last"];
@@ -992,6 +1004,10 @@ function ChatPane(props: {
   const listRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const [tokenCapHidden, setTokenCapHidden] = useState(false);
+  useEffect(() => {
+    if (!props.tokenCapReached) setTokenCapHidden(false);
+  }, [props.tokenCapReached]);
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
@@ -1119,10 +1135,12 @@ function ChatPane(props: {
         {props.notice ? (
           <DismissibleNoticeBanner title={props.notice} onDismiss={props.onDismissNotice} />
         ) : null}
-        {props.tokenCapReached ? (
-          <Text variant="secondary" size="sm" as="p" role="status">
-            {props.tokenCapMessage || "本日の利用上限に達しました。明日また利用できます。"}
-          </Text>
+        {props.tokenCapReached && !tokenCapHidden ? (
+          <DismissibleNoticeBanner
+            variant="alert"
+            title={props.tokenCapMessage || "本日の利用上限に達しました。明日以降に再度ご利用ください。"}
+            onDismiss={() => setTokenCapHidden(true)}
+          />
         ) : null}
         {props.speakQueue ? (
           <LayerCard className="flex flex-wrap items-center gap-2 rounded-lg p-3">
@@ -1161,6 +1179,9 @@ function ChatPane(props: {
             event.currentTarget.value = "";
           }}
         />
+        {props.error ? (
+          <DismissibleNoticeBanner title={props.error} onDismiss={props.onDismissError} />
+        ) : null}
         <div
           ref={composerRef}
           className="flex items-center gap-1.5 rounded-[1.75rem] bg-kumo-tint p-1.5 ring ring-kumo-line"
@@ -1221,7 +1242,6 @@ function ChatPane(props: {
             </Button>
           )}
         </div>
-        {props.error ? <Text variant="secondary" size="sm" as="p" role="alert">{props.error}</Text> : null}
       </div>
     </FileDropZone>
   );
@@ -1521,6 +1541,17 @@ function AbilityPane(props: {
   const [clockMinute, setClockMinute] = useState("0");
   const [probingId, setProbingId] = useState<string | null>(null);
   const [configureId, setConfigureId] = useState<string | null>(null);
+  const [dismissedGaps, setDismissedGaps] = useState(() => readDismissedCapabilityGaps(localStorage));
+  const openCapabilityGaps = props.capabilityGaps.filter(
+    (gap) => !dismissedGaps.has(capabilityGapSignature(gap))
+  );
+
+  function dismissCapabilityGap(gap: (typeof props.capabilityGaps)[number]) {
+    const next = new Set(dismissedGaps);
+    next.add(capabilityGapSignature(gap));
+    writeDismissedCapabilityGaps(next, localStorage);
+    setDismissedGaps(next);
+  }
 
   const documentsEnabled = props.documentsEnabled;
   useEffect(() => {
@@ -1531,7 +1562,7 @@ function AbilityPane(props: {
         if (alive) setDocuments(rows);
       })
       .catch(() => {
-        if (alive) setDocumentError("書類の一覧を読めなかった");
+        if (alive) setDocumentError("書類一覧を読み込めませんでした");
       });
     return () => {
       alive = false;
@@ -1928,7 +1959,7 @@ function AbilityPane(props: {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <Text variant="heading" as="h1">
-            能力 {visible.length}
+            カスタマイズ
           </Text>
         </div>
         {filter === "mcp" ? (
@@ -1978,17 +2009,26 @@ function AbilityPane(props: {
         />
       </div>
       {documentError ? (
-        <Text variant="error" size="sm" role="alert">
-          {documentError}
-        </Text>
+        <DismissibleNoticeBanner
+          variant="error"
+          title={documentError}
+          onDismiss={() => setDocumentError(null)}
+        />
       ) : null}
-      {props.capabilityGaps.length > 0 ? (
-        <div className="flex flex-col gap-1" role="status">
-          {props.capabilityGaps.map((gap) => (
-            <Text key={gap.id} variant="secondary" size="sm" as="p">
-              {gap.label}: {gap.missing.join(", ")} が無い
-            </Text>
-          ))}
+      {openCapabilityGaps.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {openCapabilityGaps.map((gap) => {
+            const copy = capabilityGapCopy(gap);
+            return (
+              <DismissibleNoticeBanner
+                key={gap.id}
+                variant="alert"
+                title={copy.title}
+                description={copy.description}
+                onDismiss={() => dismissCapabilityGap(gap)}
+              />
+            );
+          })}
         </div>
       ) : null}
       <AbilityCreateDialog
@@ -2122,9 +2162,11 @@ function AbilityPane(props: {
 }
 
 function documentUploadError(name: string, reason: string): string {
-  if (reason === "too_large") return `${name}: 20MB を超える書類は置けない`;
-  if (reason === "invalid_name") return `${name}: この名前は使えない（先頭のドット・記号の一部は不可）`;
-  return `${name}: 追加できなかった（${reason}）`;
+  if (reason === "too_large") return `${name} は 20MB を超えるため追加できません`;
+  if (reason === "invalid_name") {
+    return `${name} はファイル名に使用できない文字が含まれています（先頭のドットや一部の記号は使用不可）`;
+  }
+  return `${name} を追加できませんでした`;
 }
 
 /** 版の一覧。開いたときだけ取りに行く。古い版も残っているので、どれでも落とせる。 */

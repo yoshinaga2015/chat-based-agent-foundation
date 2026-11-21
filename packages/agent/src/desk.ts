@@ -111,7 +111,7 @@ export function deskDraftSkill(desk: Desk, input: { name: string; description: s
   });
   const saved = turn.toolLog[0];
   const failed = saved && typeof saved === "object" && "ok" in saved && saved.ok === false;
-  return { ...deskApplyTurn(desk, turn), notice: failed ? "スキルは保存できなかった" : null };
+  return { ...deskApplyTurn(desk, turn), notice: failed ? "スキルを保存できませんでした" : null };
 }
 
 export function deskAddCard(desk: Desk, title: string, now: number, state?: string): Desk {
@@ -144,7 +144,7 @@ export function deskProposePlan(
   jev: (plan: string) => boolean | "down" = () => "down"
 ): Desk {
   const plan = text.trim();
-  if (!plan) return { ...desk, notice: "実行計画の本文が要る" };
+  if (!plan) return { ...desk, notice: "実行計画の内容を入力してください" };
   const turn = runTurn({
     ...deskTurnInput(desk, now, "実行計画を出す"),
     jev,
@@ -170,7 +170,7 @@ export async function deskResolvePlan(
   now = Date.now(),
   opts: { agentHost?: AgentHost } = {}
 ): Promise<Desk> {
-  if (!desk.ledger.planPending) return { ...desk, notice: "承認待ちの実行計画はない" };
+  if (!desk.ledger.planPending) return { ...desk, notice: "承認待ちの実行計画はありません" };
   if (desk.pendingAgentWrite) {
     const resolved = await resolvePendingAgentWrite(desk.pendingAgentWrite, decision, opts.agentHost);
     if (!resolved.ok && decision === "approve") {
@@ -195,13 +195,13 @@ export async function deskResolvePlan(
       pendingDelete: null,
       pendingMcp: null,
       pendingAgentWrite: null,
-      notice: "実行計画を却下した。"
+      notice: "実行計画を却下しました"
     };
   }
   if (desk.pendingMcp) {
     const applied = applyPendingMcp(desk.mcpServers, desk.pendingMcp);
     if (!applied.ok) {
-      return { ...desk, notice: `MCP 設定に失敗した。理由は ${applied.detail.constraint}` };
+      return { ...desk, notice: `MCP の設定に失敗しました（${applied.detail.constraint}）` };
     }
     const userHosts = applied.grantHost && !desk.mcpUserHosts.includes(applied.grantHost)
       ? [...desk.mcpUserHosts, applied.grantHost]
@@ -216,7 +216,7 @@ export async function deskResolvePlan(
       pendingDelete: null,
       pendingMcp: null,
       pendingAgentWrite: null,
-      notice: desk.pendingMcp.op === "remove" ? "MCP を削除した。" : "MCP を登録した。"
+      notice: desk.pendingMcp.op === "remove" ? "MCP を削除しました" : "MCP を登録しました"
     };
   }
   if (!desk.pendingDelete) {
@@ -227,12 +227,12 @@ export async function deskResolvePlan(
       pendingDelete: null,
       pendingMcp: null,
       pendingAgentWrite: null,
-      notice: "実行計画を承認した。"
+      notice: "実行計画を承認しました"
     };
   }
   const applied = applyPendingDelete(desk, desk.pendingDelete, now);
   if (!applied.ok) {
-    return { ...desk, notice: `削除に失敗した。理由は ${applied.reason}` };
+    return { ...desk, notice: `削除に失敗しました（${applied.reason}）` };
   }
   return {
     ...desk,
@@ -244,7 +244,7 @@ export async function deskResolvePlan(
     pendingDelete: null,
     pendingMcp: null,
     pendingAgentWrite: null,
-    notice: "削除した。"
+    notice: "削除しました"
   };
 }
 
@@ -297,7 +297,7 @@ export async function deskCompleteMcpOAuth(
   allowHosts = mcpHostAllowFromEnv(envBag(), desk.mcpUserHosts)
 ): Promise<Desk> {
   const pending = desk.pendingMcpOAuth;
-  if (!pending) return { ...desk, notice: "OAuth 待ちがない" };
+  if (!pending) return { ...desk, notice: "認証セッションが見つかりません。もう一度接続をお試しください。" };
   const sealed = await sealMcpSecret(secret);
   const withoutOld = desk.mcpServers.filter((server) => {
     if (pending.catalogId && server.catalogId === pending.catalogId) return false;
@@ -343,7 +343,7 @@ export function deskDeleteItem(desk: Desk, pending: PendingDelete, now: number):
   });
   return {
     ...deskApplyTurn(desk, turn),
-    notice: turn.operation.ok ? "削除した。" : `削除に失敗した。理由は ${turn.operation.reason}`
+    notice: turn.operation.ok ? "削除しました" : `削除に失敗しました（${turn.operation.reason}）`
   };
 }
 
@@ -358,7 +358,7 @@ export function deskWriteNote(desk: Desk, input: { id: string; title: string; bo
   });
   return {
     ...deskApplyTurn(seeded, turn),
-    notice: turn.operation.ok ? null : `ノートを書けなかった。理由は ${turn.operation.reason}`
+    notice: turn.operation.ok ? null : `ノートを保存できませんでした（${turn.operation.reason}）`
   };
 }
 
@@ -372,7 +372,7 @@ export function deskWriteMemo(desk: Desk, input: { id: string; body: string }, n
   });
   return {
     ...deskApplyTurn(seeded, turn),
-    notice: turn.operation.ok ? null : `メモを書けなかった。理由は ${turn.operation.reason}`
+    notice: turn.operation.ok ? null : `メモを保存できませんでした（${turn.operation.reason}）`
   };
 }
 
@@ -390,7 +390,7 @@ export function deskStartJob(desk: Desk, name: string, now: number): Desk {
   return {
     ...deskApplyTurn(desk, turn),
     ran: failed ? desk.ran : [...desk.ran, name],
-    notice: failed ? `ジョブは起動できなかった。理由は ${typeof result === "object" && result && "reason" in result ? String(result.reason) : "unknown"}` : null
+    notice: failed ? `ジョブを起動できませんでした（${typeof result === "object" && result && "reason" in result ? String(result.reason) : "unknown"}）` : null
   };
 }
 
@@ -415,7 +415,7 @@ function jobPhrase(name: string): string {
 /** 論理削除。30日 Undo の入り口。 */
 export function deskDeleteNote(desk: Desk, id: string, now: number): Desk {
   if (!desk.ledger.notes.has(id) || desk.ledger.notes.get(id)?.deletedAt !== null) {
-    return { ...desk, notice: "取り消せるノートはない" };
+    return { ...desk, notice: "取り消せるノートはありません" };
   }
   const turn = runTurn({
     ...deskTurnInput(desk, now, "ノートを取り消す"),
@@ -424,7 +424,7 @@ export function deskDeleteNote(desk: Desk, id: string, now: number): Desk {
   });
   return {
     ...deskApplyTurn(desk, turn),
-    notice: turn.operation.ok ? "ノートを取り消した。" : `取り消しに失敗した。理由は ${turn.operation.reason}`
+    notice: turn.operation.ok ? "ノートを取り消しました" : `取り消しに失敗しました（${turn.operation.reason}）`
   };
 }
 
@@ -439,7 +439,7 @@ export function deskRestoreNote(desk: Desk, id: string, now: number): Desk {
   });
   return {
     ...deskApplyTurn(desk, turn),
-    notice: turn.operation.ok ? "ノートを戻した。" : `復元に失敗した。理由は ${turn.operation.reason}`
+    notice: turn.operation.ok ? "ノートを復元しました" : `復元に失敗しました（${turn.operation.reason}）`
   };
 }
 
@@ -458,7 +458,7 @@ export function deskAdvance(desk: Desk, now: number): Desk {
     workflows: out.workflows,
     posts: out.posts,
     ran: out.ran,
-    notice: calc ? calcNotice(calc) : job ? jobNotice(job) : out.ran.length === 0 ? "この時刻に、有効なワークフローは起きない" : null
+    notice: calc ? calcNotice(calc) : job ? jobNotice(job) : out.ran.length === 0 ? "この時刻に実行対象のワークフローはありません" : null
   };
 }
 
@@ -473,7 +473,7 @@ export function deskMailSource(desk: Desk, document: MailDocument): Desk {
     ...desk,
     mailDocuments,
     mailCandidates,
-    notice: mailCandidates.length === 0 ? "no_address" : null
+    notice: mailCandidates.length === 0 ? "宛先メールアドレスが見つかりません" : null
   };
 }
 
@@ -484,7 +484,7 @@ export function deskMailPreview(desk: Desk, fields: MailFields): Desk {
 }
 
 export function deskMailSend(desk: Desk, now: number): Desk {
-  if (!desk.mailFields) return { ...desk, notice: "missing_field" };
+  if (!desk.mailFields) return { ...desk, notice: "メール送信に必要な項目が不足しています" };
   const sent = commitMail(desk.mailFields, desk.mailDocuments, {
     button: true,
     sendEnabled: desk.sendEnabled,
@@ -507,7 +507,7 @@ export function deskSpeak(desk: Desk, text: string, now: number): Desk {
     return {
       ...desk,
       mailCardOpen: desk.mailPreview !== null,
-      notice: desk.mailPreview ? "確認カードを開いた。送信は画面のボタンだけが行う。" : "確認カードを開くには、文面の項目が要る。"
+      notice: desk.mailPreview ? "確認カードを開きました。送信は画面のボタンから実行してください。" : "確認カードを開くには文面の入力が必要です"
     };
   }
   const read = /^読んで[:：]\s*(.+)$/.exec(text.trim());
@@ -527,7 +527,7 @@ export function deskSpeak(desk: Desk, text: string, now: number): Desk {
           { calls: [{ name: "activate_skill", args: { name } }, { name: "read_skill_resource", args: { name } }] },
           { text: skill.body }
         ]
-      : [{ text: "そのスキルは無い。" }]
+      : [{ text: "指定されたスキルは見つかりませんでした。" }]
   });
   return deskApplyTurn(desk, turn);
 }
@@ -538,7 +538,7 @@ export function deskInterrupt(desk: Desk, now: number): Desk {
     steps: [{ calls: [{ name: "kanban_add", args: { id: "interrupted-card", title: "途中" } }] }],
     stopAfter: { index: 0, reason: "interrupt" }
   });
-  return { ...deskApplyTurn(desk, turn), notice: "割り込みにより、保留中の変更を破棄した" };
+  return { ...deskApplyTurn(desk, turn), notice: "中断されたため、保留中の変更を破棄しました" };
 }
 
 export function snapshot(desk: Desk): unknown {
@@ -656,15 +656,15 @@ function calcNotice(calc: { ok: boolean; detail?: unknown }): string {
   const detail = calc.detail;
   const reason = detail && typeof detail === "object" && "reason" in detail ? detail.reason : undefined;
   const name = detail && typeof detail === "object" && "name" in detail && typeof detail.name === "string" ? detail.name : "";
-  if (!calc.ok) return typeof reason === "string" ? reason : "計算は実行できなかった";
-  return name ? `${name} を実行した` : "計算を実行した";
+  if (!calc.ok) return typeof reason === "string" ? reason : "計算を実行できませんでした";
+  return name ? `${name} を実行しました` : "計算を実行しました";
 }
 
 function jobNotice(entry: { ok: boolean; detail?: unknown }): string {
-  if (!entry.ok) return "ジョブは実行できなかった";
+  if (!entry.ok) return "ジョブを実行できませんでした";
   const detail = entry.detail;
   const name = detail && typeof detail === "object" && "name" in detail && typeof detail.name === "string" ? detail.name : "";
-  return name ? `${name} を起動した` : "ジョブを起動した";
+  return name ? `${name} を起動しました` : "ジョブを起動しました";
 }
 
 function worldOf(desk: Desk, now: number): FlowWorld {

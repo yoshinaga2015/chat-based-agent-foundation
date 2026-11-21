@@ -186,7 +186,7 @@ describe("resolvePendingAgentWrite", () => {
       "approve",
       host({ ok: false, reason: "x" }, { writeBack: async () => ({ ok: false, reason: "staging_expired", detail: { constraint: "複製の保管期限切れ" } }) })
     );
-    expect(resolved).toEqual({ ok: false, notice: "書き戻しに失敗した（複製の保管期限切れ）" });
+    expect(resolved).toEqual({ ok: false, notice: "変更の反映に失敗しました（複製の保管期限切れ）" });
   });
 });
 

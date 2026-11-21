@@ -15,6 +15,6 @@ describe("作成 Undo の廃止", () => {
     const session = writeNote(createSession(), { id: "n1", title: "甲", body: "乙" }, 10);
     const next = undoLast(session, 11);
     expect(next.desk.ledger.notes.get("n1")?.deletedAt).toBeNull();
-    expect(next.desk.notice).toBe("取り消せる操作はない");
+    expect(next.desk.notice).toBe("取り消せる操作はありません");
   });
 });

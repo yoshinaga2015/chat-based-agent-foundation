@@ -18,7 +18,7 @@ describe("モデルが止まったとき", () => {
     const draft = await draftSpeak(createSession(), "こんにちは", 1, async () => {
       throw new Error("AiGatewayError: 2052: Insufficient unified billing balance for this request.");
     });
-    expect(draft.tokens.join("")).toContain("クレジットが足りません");
+    expect(draft.tokens.join("")).toContain("クレジットが不足しています");
   });
 
   it("理由の分からない失敗は接続失敗として出す", async () => {

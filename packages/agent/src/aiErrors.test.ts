@@ -32,6 +32,6 @@ describe("aiStopReason", () => {
   });
 
   it("対処を文で返す", () => {
-    expect(aiStopText(new Error("3036"))).toContain("AI Gateway でクレジットを買うか");
+    expect(aiStopText(new Error("3036"))).toContain("AI Gateway でクレジットを購入するか");
   });
 });

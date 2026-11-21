@@ -113,7 +113,7 @@ describe("評価卓", () => {
     expect(approved.ledger.notes.get("n1")?.deletedAt).toBe(now + 2);
     expect(approved.ledger.planPending).toBe(false);
     expect(approved.pendingDelete).toBeNull();
-    expect(approved.notice).toBe("削除した。");
+    expect(approved.notice).toBe("削除しました");
 
     const again = deskWriteNote(createDesk(), { id: "n2", title: "乙", body: "本文" }, now);
     const ui = deskDeleteNote(again, "n2", now + 3);

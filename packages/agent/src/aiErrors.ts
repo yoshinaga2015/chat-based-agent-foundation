@@ -4,11 +4,11 @@ export type AiStopReason = "free_allocation" | "paid_plan" | "credit";
 
 const STOP_TEXT: Record<AiStopReason, string> = {
   free_allocation:
-    "Workers AI の今日の無料枠（10,000 Neurons）を使い切りました。AI Gateway でクレジットを買うか、プロバイダのキーを AI Gateway に保存してください。",
+    "Workers AI の本日の無料枠（10,000 Neurons）を使い切りました。AI Gateway でクレジットを購入するか、プロバイダの API キーを AI Gateway に登録してください。",
   paid_plan:
-    "このモデルは Workers Paid プランが要ります。AI Gateway でクレジットを買うか、プロバイダのキーを AI Gateway に保存してください。",
+    "このモデルを利用するには Workers Paid プランが必要です。AI Gateway でクレジットを購入するか、プロバイダの API キーを AI Gateway に登録してください。",
   credit:
-    "AI Gateway のクレジットが足りません。ダッシュボードでクレジットを買うか、プロバイダのキーを AI Gateway に保存してください。"
+    "AI Gateway のクレジットが不足しています。ダッシュボードでクレジットを購入するか、プロバイダの API キーを AI Gateway に登録してください。"
 };
 
 export function aiStopReason(error: unknown): AiStopReason | null {

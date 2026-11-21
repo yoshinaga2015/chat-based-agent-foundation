@@ -9,7 +9,9 @@ export function noticeBannerVariant(notice: string): NoticeBannerVariant {
   const t = notice.trim();
   if (/^接続 OK\b/.test(t)) return "default";
   if (
-    /失敗|できない|不正|拒否|エラー|見つからない|要る|無い|破棄|接続を開始できない/.test(t)
+    /失敗|できな|できません|不正|無効|拒否|エラー|見つからな|見つかりません|要る|必要|無い|ありません|不足|超え|対応していない|使用できない|選べません|選択できません|入力してください|設定されていません|中断|上限|までです/.test(
+      t
+    )
   ) {
     return "error";
   }

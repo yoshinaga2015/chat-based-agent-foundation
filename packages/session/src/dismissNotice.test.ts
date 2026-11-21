@@ -8,14 +8,14 @@ describe("dismissNotice", () => {
       ...base,
       desk: {
         ...base.desk,
-        notice: "実行計画を承認した。",
+        notice: "実行計画を承認しました",
         abilityNotice: "接続 OK · 2ツール"
       }
     };
     expect(dismissNotice(filled, "notice").desk.notice).toBeNull();
     expect(dismissNotice(filled, "notice").desk.abilityNotice).toBe("接続 OK · 2ツール");
     expect(dismissNotice(filled, "ability").desk.abilityNotice).toBeNull();
-    expect(dismissNotice(filled, "ability").desk.notice).toBe("実行計画を承認した。");
+    expect(dismissNotice(filled, "ability").desk.notice).toBe("実行計画を承認しました");
     const all = dismissNotice(filled, "all");
     expect(all.desk.notice).toBeNull();
     expect(all.desk.abilityNotice).toBeNull();

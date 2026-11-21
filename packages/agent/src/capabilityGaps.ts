@@ -11,7 +11,7 @@ export interface CapabilityGap {
 
 const LABELS: Record<CapabilityGapId, string> = {
   run_agent: "Claude Code",
-  agent_repos: "リポジトリの作業場所"
+  agent_repos: "GitHub リポジトリ連携"
 };
 
 /**
